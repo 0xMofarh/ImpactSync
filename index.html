@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم مشروع منصة المؤثرين</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Harmony -->
+    <!-- Application Structure Plan: A task-oriented dashboard designed for a solo developer. The structure prioritizes clarity and actionability over mirroring the report's linear format. It features a main navigation to switch between a high-level 'Project Timeline' (Gantt-style chart) and a detailed 'Task Breakdown'. The task view uses an interactive, expandable card system for each of the 7 phases, allowing the user to manage tasks, track progress with dynamic bars, and filter by status. This design was chosen to transform a static plan into a dynamic and motivational project management tool, helping the developer stay organized and focused. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Project Phases & Durations -> Goal: Visualize timeline -> Viz: Horizontal Bar Chart (Gantt-style) -> Interaction: Hover for details -> Justification: Provides a clear, high-level overview of the project schedule and phase dependencies -> Library: Chart.js (Canvas).
+        - Report Info: Detailed tasks within each phase -> Goal: Organize and manage tasks -> Presentation: Expandable cards with checklists -> Interaction: Click to expand/collapse, check tasks to update progress -> Justification: Breaks down complexity, allows focus on one phase at a time, provides satisfying feedback via progress bars -> Method: HTML/CSS/JS.
+        - Report Info: Overall Progress -> Goal: Motivate and inform -> Viz: Progress Bars (Overall & Per-Phase) -> Interaction: Dynamically updates when tasks are checked -> Justification: Gives immediate visual feedback on accomplishments, maintaining momentum for a solo developer -> Method: HTML/CSS/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #FDFBF7;
+            color: #4A4A4A;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .task-card {
+            transition: all 0.3s ease-in-out;
+        }
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .progress-bar-bg {
+            background-color: #EAEAEA;
+        }
+        .progress-bar-fg {
+            background-color: #8D8741;
+            transition: width 0.5s ease-in-out;
+        }
+        [x-cloak] { display: none !important; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body x-data="projectDashboard()">
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-[#659DBD]">لوحة تحكم مشروع منصة المؤثرين</h1>
+            <p class="text-lg mt-2 text-gray-600">أداة العمل الخاصة بك لتحويل الخطة إلى واقع</p>
+        </header>
+
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-[#8D8741]">نظرة عامة على التقدم</h2>
+            <div class="w-full progress-bar-bg rounded-full h-8">
+                <div class="progress-bar-fg text-xs font-medium text-blue-100 text-center p-1 leading-none rounded-full h-8 flex items-center justify-center" 
+                     :style="`width: ${overallProgress()}%`">
+                    <span x-text="`${overallProgress()}%`"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-center mb-8 border-b-2 border-gray-200">
+            <button @click="activeTab = 'tasks'" 
+                    :class="{'border-[#8D8741] text-[#8D8741]': activeTab === 'tasks', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'tasks'}"
+                    class="py-4 px-6 block font-medium text-lg border-b-4 focus:outline-none">
+                📋 قائمة المهام
+            </button>
+            <button @click="activeTab = 'timeline'"
+                    :class="{'border-[#8D8741] text-[#8D8741]': activeTab === 'timeline', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'timeline'}"
+                    class="py-4 px-6 block font-medium text-lg border-b-4 focus:outline-none">
+                ⏳ الجدول الزمني
+            </button>
+        </div>
+
+        <main>
+            <!-- Task Breakdown View -->
+            <div x-show="activeTab === 'tasks'" x-cloak>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="(phase, index) in phases" :key="index">
+                        <div class="task-card bg-white rounded-2xl shadow-md p-5 flex flex-col">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="text-xl font-bold text-[#659DBD]" x-text="phase.title"></h3>
+                                <span class="text-sm font-semibold bg-[#F4E0B9] text-[#BC6C25] py-1 px-3 rounded-full" x-text="`المرحلة ${index + 1}`"></span>
+                            </div>
+                            <p class="text-gray-600 mb-4 flex-grow" x-text="phase.description"></p>
+                            
+                            <div class="mb-4">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-base font-medium text-[#8D8741]">التقدم</span>
+                                    <span class="text-sm font-medium text-[#8D8741]" x-text="`${phaseProgress(phase)}%`"></span>
+                                </div>
+                                <div class="w-full progress-bar-bg rounded-full h-2.5">
+                                    <div class="progress-bar-fg h-2.5 rounded-full" :style="`width: ${phaseProgress(phase)}%`"></div>
+                                </div>
+                            </div>
+
+                            <button @click="phase.expanded = !phase.expanded" class="w-full text-left text-[#BC6C25] font-semibold mt-auto flex items-center justify-between">
+                                <span x-text="phase.expanded ? 'إخفاء المهام' : 'عرض المهام'"></span>
+                                <svg class="w-4 h-4 transition-transform" :class="{'rotate-180': phase.expanded}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+
+                            <div x-show="phase.expanded" x-collapse x-cloak>
+                                <ul class="mt-4 space-y-3">
+                                    <template x-for="(task, taskIndex) in phase.tasks" :key="taskIndex">
+                                        <li class="flex items-start">
+                                            <input type="checkbox" :id="`task_${index}_${taskIndex}`" x-model="task.completed" class="mt-1 form-checkbox h-5 w-5 text-[#8D8741] rounded border-gray-300 focus:ring-[#659DBD]">
+                                            <label :for="`task_${index}_${taskIndex}`" class="mr-3 text-gray-700" :class="{'line-through text-gray-400': task.completed}" x-text="task.name"></label>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Timeline View -->
+            <div x-show="activeTab === 'timeline'" x-cloak>
+                 <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="chart-container">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        function projectDashboard() {
+            return {
+                activeTab: 'tasks',
+                phases: [
+                    {
+                        title: 'التأسيس المعماري والإعداد',
+                        description: 'وضع حجر الأساس للمشروع باختيار التقنيات المناسبة وإعداد بيئة العمل.',
+                        duration: [0, 2], // [start_week, end_week]
+                        expanded: false,
+                        tasks: [
+                            { name: 'اختيار إطار عمل الواجهة الخلفية (Django)', completed: false },
+                            { name: 'اختيار قاعدة البيانات (PostgreSQL)', completed: false },
+                            { name: 'إعداد بيئة المشروع (Git, venv)', completed: false },
+                            { name: 'تكوين الاتصال بقاعدة البيانات', completed: false },
+                        ]
+                    },
+                    {
+                        title: 'تصميم مخطط قاعدة البيانات',
+                        description: 'ترجمة متطلبات المنصة إلى نماذج بيانات وهيكل قاعدة بيانات متين.',
+                        duration: [2, 4],
+                        expanded: false,
+                        tasks: [
+                            { name: 'نمذجة المستخدم والملفات الشخصية (User, Profiles)', completed: false },
+                            { name: 'نمذجة المحتوى والمنصات (Platforms, Content)', completed: false },
+                            { name: 'نمذجة الحملات والاشتراكات (Campaigns, Subscriptions)', completed: false },
+                            { name: 'رسم مخطط علاقات الكيانات (ERD)', completed: false },
+                        ]
+                    },
+                    {
+                        title: 'بناء المنتج الأولي (MVP)',
+                        description: 'تطوير الميزات الأساسية لتقديم منتج وظيفي قابل للاختبار والتحقق.',
+                        duration: [4, 9],
+                        expanded: false,
+                        tasks: [
+                            { name: 'تنفيذ نظام المصادقة والتسجيل (django-allauth)', completed: false },
+                            { name: 'بناء لوحة تحكم المعلنين الأساسية', completed: false },
+                            { name: 'تطوير نموذج تسجيل المؤثرين', completed: false },
+                            { name: 'تنفيذ استيراد/تصدير ملفات Excel (django-import-export)', completed: false },
+                        ]
+                    },
+                    {
+                        title: 'تحقيق الدخل ومنطق الاشتراكات',
+                        description: 'بناء محرك تحقيق الدخل عبر الباقات ودمج بوابات الدفع.',
+                        duration: [9, 12],
+                        expanded: false,
+                        tasks: [
+                            { name: 'تنفيذ نماذج الباقات والاشتراكات', completed: false },
+                            { name: 'دمج بوابة الدفع (Stripe/Tap/Noonpay)', completed: false },
+                            { name: 'إعداد منطق الفترة التجريبية المجانية', completed: false },
+                            { name: 'تطوير واجهة إدارة الاشتراكات للشركات', completed: false },
+                        ]
+                    },
+                    {
+                        title: 'تكامل البيانات المتقدم',
+                        description: 'تطوير الوظائف المتقدمة التي ترتكز على جمع البيانات وتحليلها.',
+                        duration: [12, 17],
+                        expanded: false,
+                        tasks: [
+                            { name: 'بناء نظام التجميع الآلي للبيانات (API & Celery)', completed: false },
+                            { name: 'تنفيذ واجهات OAuth للمؤثرين', completed: false },
+                            { name: 'تطوير نظام التصفية والبحث المتقدم (django-filter)', completed: false },
+                            { name: 'بناء نظام إدارة الحملات والتقارير', completed: false },
+                        ]
+                    },
+                    {
+                        title: 'ميزات الذكاء والتفاعل',
+                        description: 'إضافة طبقات من التحليل والتفاعل لتمييز المنصة عن المنافسين.',
+                        duration: [17, 20],
+                        expanded: false,
+                        tasks: [
+                            { name: 'تطوير نظام تقييم المؤثرين (django-star-ratings)', completed: false },
+                            { name: 'بناء نظام التصنيف الآلي للأداء (Celery & Scikit-learn)', completed: false },
+                            { name: 'تنفيذ نظام الإشعارات الاستباقي', completed: false },
+                        ]
+                    },
+                    {
+                        title: 'الواجهة الأمامية والنشر',
+                        description: 'تصميم واجهة المستخدم النهائية ونشر التطبيق ليكون متاحاً للجمهور.',
+                        duration: [20, 24],
+                        expanded: false,
+                        tasks: [
+                            { name: 'تطوير الواجهة الأمامية التفاعلية (Alpine.js)', completed: false },
+                            { name: 'إعداد خادم النشر (VPS, Nginx, Gunicorn)', completed: false },
+                            { name: 'تكوين خدمة قاعدة البيانات المُدارة (AWS RDS)', completed: false },
+                            { name: 'إعداد CI/CD pipeline للنشر التلقائي', completed: false },
+                        ]
+                    }
+                ],
+                init() {
+                    this.$watch('activeTab', (value) => {
+                        if (value === 'timeline') {
+                            this.$nextTick(() => this.renderTimelineChart());
+                        }
+                    });
+                },
+                phaseProgress(phase) {
+                    const totalTasks = phase.tasks.length;
+                    if (totalTasks === 0) return 0;
+                    const completedTasks = phase.tasks.filter(task => task.completed).length;
+                    return Math.round((completedTasks / totalTasks) * 100);
+                },
+                overallProgress() {
+                    const allTasks = this.phases.flatMap(phase => phase.tasks);
+                    const totalTasks = allTasks.length;
+                    if (totalTasks === 0) return 0;
+                    const completedTasks = allTasks.filter(task => task.completed).length;
+                    return Math.round((completedTasks / totalTasks) * 100);
+                },
+                timelineChart: null,
+                renderTimelineChart() {
+                    const ctx = document.getElementById('timelineChart').getContext('2d');
+                    
+                    if (this.timelineChart) {
+                        this.timelineChart.destroy();
+                    }
+
+                    const data = {
+                        labels: this.phases.map(p => p.title),
+                        datasets: [{
+                            label: 'الجدول الزمني للمشروع (بالأسابيع)',
+                            data: this.phases.map(p => p.duration),
+                            backgroundColor: 'rgba(141, 135, 65, 0.6)',
+                            borderColor: 'rgba(141, 135, 65, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                        }]
+                    };
+
+                    const options = {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'الأسابيع'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.raw;
+                                        return ` من الأسبوع ${value[0]} إلى الأسبوع ${value[1]}`;
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    this.timelineChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: data,
+                        options: options
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
