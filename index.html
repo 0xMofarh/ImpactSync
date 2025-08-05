@@ -9,14 +9,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Warm Harmony -->
-    <!-- Application Structure Plan: A task-oriented dashboard designed for a solo developer. The structure prioritizes clarity and actionability over mirroring the report's linear format. It features a main navigation to switch between a high-level 'Project Timeline' (Gantt-style chart) and a detailed 'Task Breakdown'. The task view uses an interactive, expandable card system for each of the 7 phases, allowing the user to manage tasks, track progress with dynamic bars, and filter by status. This design was chosen to transform a static plan into a dynamic and motivational project management tool, helping the developer stay organized and focused. -->
-    <!-- Visualization & Content Choices: 
-        - Report Info: Project Phases & Durations -> Goal: Visualize timeline -> Viz: Horizontal Bar Chart (Gantt-style) -> Interaction: Hover for details -> Justification: Provides a clear, high-level overview of the project schedule and phase dependencies -> Library: Chart.js (Canvas).
-        - Report Info: Detailed tasks within each phase -> Goal: Organize and manage tasks -> Presentation: Expandable cards with checklists -> Interaction: Click to expand/collapse, check tasks to update progress -> Justification: Breaks down complexity, allows focus on one phase at a time, provides satisfying feedback via progress bars -> Method: HTML/CSS/JS.
-        - Report Info: Overall Progress -> Goal: Motivate and inform -> Viz: Progress Bars (Overall & Per-Phase) -> Interaction: Dynamically updates when tasks are checked -> Justification: Gives immediate visual feedback on accomplishments, maintaining momentum for a solo developer -> Method: HTML/CSS/JS.
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Tajawal', sans-serif;
@@ -82,7 +74,6 @@
         </div>
 
         <main>
-            <!-- Task Breakdown View -->
             <div x-show="activeTab === 'tasks'" x-cloak>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <template x-for="(phase, index) in phases" :key="index">
@@ -123,7 +114,6 @@
                 </div>
             </div>
 
-            <!-- Timeline View -->
             <div x-show="activeTab === 'timeline'" x-cloak>
                  <div class="bg-white rounded-2xl shadow-lg p-6">
                     <div class="chart-container">
@@ -143,7 +133,7 @@
                     {
                         title: 'التأسيس المعماري والإعداد',
                         description: 'وضع حجر الأساس للمشروع باختيار التقنيات المناسبة وإعداد بيئة العمل.',
-                        duration: [0, 2], // [start_week, end_week]
+                        duration: [0, 2], 
                         expanded: false,
                         tasks: [
                             { name: 'اختيار إطار عمل الواجهة الخلفية (Django)', completed: false },
@@ -311,3 +301,4 @@
     </script>
 </body>
 </html>
+
